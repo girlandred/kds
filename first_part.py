@@ -25,4 +25,4 @@ def process_video(video_file):
     cv2.destroyAllWindows()
 
 
-process_video('lab1vid.mp4')
+process_video('Simulator Screen Recording - iPhone 13 - 2023-11-01 at 14.27.26.mp4')

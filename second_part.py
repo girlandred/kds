@@ -2,14 +2,17 @@ import cv2
 
 
 def record_video(output_file):
-    video = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    video = cv2.VideoCapture(0)
 
     if not video.isOpened():
-        print("Error")
+        print("Error: Could not open video capture device")
         return
 
-    fourcc = cv2.VideoWriter_fourcc(*'MP4V')
-    result = cv2.VideoWriter(output_file, fourcc, 20.0, (720, 480))
+    frame_width = int(video.get(3))
+    frame_height = int(video.get(4))
+
+    fourcc = cv2.VideoWriter_fourcc(*'H264')
+    result = cv2.VideoWriter(output_file, fourcc, 20.0, (frame_width, frame_height))
 
     while True:
         ret, frame = video.read()
@@ -28,4 +31,4 @@ def record_video(output_file):
     cv2.destroyAllWindows()
 
 
-record_video('video.mp4')
+record_video('vid.mp4')
