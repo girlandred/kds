@@ -1,57 +1,35 @@
 import cv2
-from moviepy.audio.fx.all import audio_fadein as afx_fadein, audio_fadeout as afx_fadeout
-from moviepy.audio.io.AudioFileClip import AudioFileClip
-from moviepy.editor import VideoFileClip, concatenate_videoclips, TextClip
 
 
-def save_video_part(clip, start_time, end_time, output_path):
-    part = clip.subclip(start_time, end_time)
-    part.write_videofile(output_path)
+def divide_video(input_video, output_video1, output_video2, duration=60):
+    cap = cv2.VideoCapture(input_video)
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
+    start_frame_part1, end_frame_part1 = 0, duration * fps
+    start_frame_part2, end_frame_part2 = end_frame_part1, min(total_frames, start_frame_part1 + duration * fps)
 
-def main():
-    video_path = 'vid.mp4'
-    clip = VideoFileClip(video_path)
+    out1 = cv2.VideoWriter(output_video1, cv2.VideoWriter_fourcc(*'mp4v'), fps, (int(cap.get(3)), int(cap.get(4))))
+    out2 = cv2.VideoWriter(output_video2, cv2.VideoWriter_fourcc(*'mp4v'), fps, (int(cap.get(3)), int(cap.get(4))))
 
-    # Save video parts
-    save_video_part(clip, 0, 60, 'part1.mp4')
-    save_video_part(clip, 60, 120, 'part2.mp4')
+    for frame_num in range(start_frame_part1, end_frame_part1):
+        ret, frame = cap.read()
+        if not ret:
+            break
+        out1.write(frame)
 
-    # Load video parts
-    part1 = VideoFileClip('part1.mp4')
-    part2 = VideoFileClip('part2.mp4')
+    for frame_num in range(start_frame_part2, end_frame_part2):
+        ret, frame = cap.read()
+        if not ret:
+            break
+        out2.write(frame)
 
-    audio = AudioFileClip('your_audio.wav')
+    out1.release()
+    out2.release()
+    cap.release()
 
-    # Add audio to video parts
-    part1 = part1.set_audio(audio)
-    part2 = part2.set_audio(audio)
-
-    # Apply fade-in and fade-out to audio
-    audio_faded = afx_fadein(audio, 3).fx(afx_fadeout, 3)
-
-    # Concatenate video parts with crossfade
-    final_clip = concatenate_videoclips([part1.crossfadeout(3), part2.crossfadein(3)])
-
-    # Set final audio
-    final_clip = final_clip.set_audio(audio_faded)
-
-    # Write the final video with crossfade
-    final_clip.write_videofile('final_video.mp4', codec='libx264', audio_codec='aac')
-
-    # Create video with music
-    video_with_music = part1.set_audio(audio_faded)
-    video_with_music.write_videofile('video_with_music.mp4')
-
-    # Save start frame
-    start_frame = clip.get_frame(0)
-    cv2.imwrite('start_frame.jpg', cv2.cvtColor(start_frame, cv2.COLOR_RGB2BGR))
-
-    # Create end frame with text
-    txt_clip = TextClip("The End", fontsize=70, color='white')
-    end_frame = txt_clip.set_pos('center').set_duration(clip.duration)
-    end_frame.write_videofile('end_frame.mp4', audio=False)
+    print("Video division finished.")
 
 
 if __name__ == "__main__":
-    main()
+    divide_video("vid.mp4", "output_video_part1.mp4", "output_video_part2.mp4")
